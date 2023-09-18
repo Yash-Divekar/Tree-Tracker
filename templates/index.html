@@ -1,0 +1,225 @@
+{% extends 'map.html' %} {% block nav %}
+<div class="row p-3">
+  <div class="col-md-6">
+    <div style="height: 60px">
+      <a
+        href="#"
+        class="d-none d-md-block btn btn-st leading-none btn-st-green mr-5 mr-xl-7"
+        style="
+          font-size: 30px;
+          background-color: #79ad3d;
+          width: fit-content;
+          border-radius: 30px;
+          max-height: fit-content;
+        "
+      >
+        <img
+          src="https://sankalptaru.org/wp-content/themes/sankalptaru/dist/img/tree-icon.svg"
+          class="h-20"
+          style="height: 50px"
+        />&nbsp;Plant now
+      </a>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <form action="add/">
+      <button
+        type="submit"
+        class="btn p-2"
+        style="
+          font-size: 30px;
+          background-color: #79ad3d;
+          width: fit-content;
+          border-radius: 30px;
+          max-height: fit-content;
+        "
+      >
+        <i
+          class="gg-add-r"
+          style="display: inline-block; color: beige; margin-right: 10px"
+        ></i
+        >Add Survey
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block main %}
+<div class="row">
+  <div class="col-md-8 p-3" style="padding-left: 1px">
+    <div id="map" style="border-radius: 15px; box-shadow: -3px 2px 15px"></div>
+  </div>
+
+  <script type="text/javascript">
+    var data = JSON.parse("{{json|escapejs}}");
+
+    function details(index) {
+        console.log('start')
+        const text = document.createElement('div');
+        text.innerText = `
+                <p>Species ${data[index].species}</p>
+                <p>Tree Height: ${data[index].tree_height}</p>
+                <p>Steam Diameter: ${data[index].steam_diameter}</p>
+                `;
+        details_pannel.appendChild(text)
+        console.log('end')
+    }
+</script>
+
+  <div class="col-md-4">
+    <div class="card m-3" style="box-shadow: 7px 5px 25px; border-radius: 15px">
+      <h5
+        class="card-header"
+        style="
+          width: 100%;
+          background-color: #3e4444;
+          color: beige;
+          height: 60px;
+          font-size: xx-large;
+          border-top-right-radius: 15px;
+          border-top-left-radius: 15px;
+        "
+      >
+        <p style="margin-left: 10px">Filters</p>
+      </h5>
+      <div
+        class="card-body p-3"
+        style="
+          display: grid;
+          place-items: center;
+          background-color: #79ad3d;
+          font-size: medium;
+          border-bottom-left-radius: 15px;
+          border-bottom-right-radius: 15px;
+          font-size: larger;
+        "
+      >
+        <form method="post" action="#">
+          {% csrf_token %}
+          <p>
+            Location
+            <input
+              type="text"
+              name="Location"
+              id="Location"
+              class="input-group-text"
+            />
+          </p>
+          <div class="row">
+            <div class="col-sm-5" style="padding: 3px">
+              <select name="filter" id="filter" class="form-select" onchange="filter_data()">
+                <option value="Species">Species</option>
+                <option value="Spreading">Spreading</option>
+                <option value="Crown_dmg">Crown Damage</option>
+                <option value="Trunk_dmg">Trunk Damage</option>
+              </select>
+            </div>
+            <div class="col-sm-7" style="padding: 3px;max-width: 150px; margin: 3px;" name="filter_text" id="filter_text">
+              <input name='species' class="input-group-text" style="width: 150px;">
+            </div>
+          </div>
+          <button type='submit' class="btn btn-sucess" style="background-color: #3e4444;
+          color: beige;">Filter</button>
+        </form>
+        <!-------------------------------------------------------DATA ANALISYS ------------------------------------>
+        <div style="font-size: xx-large," id="details">
+          <!-------------------Data---------------->
+          <p>Surveys: {{survey}}</p>
+          <p>species: {{species}}</p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
+
+
+{% block script %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+
+<script>
+    var map = L.map('map').setView([20.5937, 78.9629], 5); // Center coordinates of India, zoom level 5
+    var marker = null;
+    const details_pannel = document.getElementById('details');
+    const lat = document.getElementById('lat');
+    const lng = document.getElementById('lng');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 18
+    }).addTo(map);
+
+    for (i = 0; i <= data.length; i++) {
+        // Add new marker
+        marker = L.marker([data[i].latitude, data[i].longitude], { draggable: false }).addTo(map);
+        var popupContent = `
+                <div>
+                    <p>${data[i].species}</p>
+                    <a href="javascript:details_function(${i})" >More Details</a>
+                </div>
+            `;
+        marker.bindPopup(popupContent);
+    };
+    
+
+    function details_function(index){
+      console.log(data[index])
+      details_pannel.innerHTML=``
+      details_pannel.style.fontSize='large'
+      var text=document.createElement('div')
+      text.innerHTML=`
+      <p>Species: ${data[index].species}</p>
+      <p>Tree Height: ${data[index].tree_height}</p>
+      <p>Steam Diameter: ${data[index].steam_diameter}</p>
+      <p>Crown Height: ${data[index].crown_height}</p>
+      <p>crown Diameter: ${data[index].crown_diameter}</p>
+      <p>Spreading: ${data[index].spreading}</p>
+      <p>crown Damage: ${data[index].crown_damage}</p>
+      <p>Trunk Damage: ${data[index].trunk_damage}</p>
+      `
+      details_pannel.appendChild(text)
+    }
+    function filter_data(){
+    const filter=document.getElementById('filter').value
+    const filter_text=document.getElementById('filter_text')
+    console.log(filter)
+    if (filter=='Spreading'){
+      filter_text.innerHTML=`<select class="form-select" name="spreading"
+                                                id="crown_type">
+                                                <option value="Spreading">Spreading</option>
+                                                <option value="Oval">Oval</option>
+                                                <option value="Cone">Cone</option>
+                                                <option value="Columnal">Columnal</option>
+                                                <option value="Fan">Fan</option>
+                                                <option value="Cube">Cube</option>
+                                            </select>`
+    }
+    if (filter=='Species'){
+      filter_text.innerHTML= `<input name='species' class="input-group-text">`
+    }
+    if (filter=='Crown_dmg'){
+      filter_text.innerHTML=`<select class="form-select" name="crown_dmg" id="crown_dmg">
+                                                <option value="">Crown Damage</option>
+                                                <option value="0-5% "> 0-5% </option>
+                                                <option value="6-25% "> 6-25% </option>
+                                                <option value="26-50%"> 26-50%</option>
+                                                <option value="51-75%"> 51-75%</option>
+                                                <option value=">75%"> >75%
+                                                </option>
+                                            </select>`
+    }
+    if (filter=='Trunk_dmg'){
+      filter_text.innerHTML=`<select class="form-select" name="trunk_dmg" id="trunk_dmg">
+                                                <option value="">Trunk Damage</option>
+                                                <option value="Very good:0-5%">Very good:0-5%</option>
+                                                <option value="Good:6-10%">Good:6-10%</option>
+                                                <option value="Fair:11-25%">Fair:11-25%</option>
+                                                <option value="Poor:26-50%">Poor:26-50%</option>
+                                                <option value="Very poor:51-75%">Very poor:51-75%</option>
+                                                <option value="Moribund:>75%">Moribund:>75%</option>
+                                            </select>`
+    }
+    }
+</script>
+{% endblock %}
