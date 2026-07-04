@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Map App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <link href='https://unpkg.com/css.gg@2.0.0/icons/css/add-r.css' rel='stylesheet'>
+    <style>
+
+        #map {
+            height: 550px;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+    </style>
+</head>
+
+<body>
+    <nav style="background-color: #c1946a; height: 100px;">
+        <div class="row">
+            <div class="col-md-6">
+                <h1 style="font-size: 70px; margin-left: 40px;">Tree Tracker</h1>
+            </div>
+            <div class="col-md-2"></div>
+            <div class="col-md-4">
+                {% block nav %}
+                <link href='https://unpkg.com/css.gg@2.0.0/icons/css/readme.css' rel='stylesheet'>
+                <div class="row" style="margin-top: 22px;">
+                    <div class="col-sm-6">
+                        <form action="{% url 'survey_pdf' %}">
+                        <button type="submit" class='btn'
+                        style="font-size: 30px;background-color: #79ad3d;border-radius: 30px;max-height: fit-content;max-width: max-content;"><i class="gg-readme" style="display: inline-block;color: beige;margin-right: 15px;margin-left: 5px;"></i>Survey method</button>
+                    </form>
+                    </div>
+                    
+                    <div class="col-sm-6">
+                        <div style="height: 40px;">
+                            <a href="#" class="d-none d-md-block btn btn-st leading-none btn-st-green mr-5 mr-xl-7"
+                                style="font-size: 30px;background-color: #79ad3d;width: fit-content;border-radius: 30px;max-height: fit-content;">
+                                <img src="https://sankalptaru.org/wp-content/themes/sankalptaru/dist/img/tree-icon.svg"
+                                    class="h-20" style="height: 40px;">&nbsp;Plant now </a>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+        </div>
+    </nav>
+    <div style="flex: 1; background-color: #EBE2D7; padding-bottom: 2px;">
+        <div class="container-fluid">
+            {% block main %}
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card m-3" style="box-shadow: 7px 5px 25px;border-radius: 15px;">
+                        <h5 class="card-header"
+                            style="width: 100%;background-color: #3e4444; color: beige; height: 60px; font-size: 37px; border-top-right-radius: 15px;border-top-left-radius: 15px;">
+                            <p style="margin-left: 10px;">Analysis</p>
+                        </h5>
+                        <div class=' card-body'
+                            style="display: grid; place-items: center; background-color:#79ad3d; font-size: medium; border-bottom-left-radius: 15px;border-bottom-right-radius: 15px;font-size: larger;">
+                    <div id="piechart_3d" style="width: 100%;"></div>
+                    </div>
+                </div>
+                </div>
+            
+            <div class="col-md-7 p-3" >
+                <div id="map" style="border-radius: 15px; box-shadow: -3px 2px 15px;"></div>
+            </div>
+        </div>
+            {% endblock %}
+        </div>
+    </div>
+    <footer style="position: fixed; bottom: 0; width: 100%; background-color: #3e4444; height: 45px; color: beige;">
+        <h5 style="display: grid; place-items: center; font-size: xx-large; ">I am planting a tree to
+            teach me to gather my strength from my deepest roots</h5>
+    </footer>
+
+
+    {% block script %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+<script>
+    // Fetch the heatmap data from Django view and store it in a variable
+    var heatmapData = {{ heatmap_data|safe }};
+
+    // Initialize the map
+    var map = L.map('map').setView([20.5937, 78.9629], 5);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Create an empty heatmap layer
+    var heat = L.heatLayer([], { 
+        radius: 40, // Adjust the radius of each point
+        maxOpacity: 1.0, // Set maximum opacity
+        gradient: { 0.0: 'white', 0.1: 'orange', 0.3: 'darkgreen' },
+        opacity: 1, // Adjust the overall opacity of the heatmap layer
+    }).addTo(map);
+
+    // Process heatmap data and add it to the heatmap layer
+    var heatmapPoints = [];
+    heatmapData.forEach(function (point) {
+        var intensity = Math.min(1, point.intensity / 100); // Normalize intensity between 0 and 1
+        var color = 'rgba(0,0,0,' + intensity + ')'; // Adjust opacity based on intensity
+        heatmapPoints.push([point.latitude, point.longitude, intensity]); // Use intensity as the third parameter
+    });
+    heat.setLatLngs(heatmapPoints);
+</script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+      
+      
+      
+      function drawChart() {
+        var spreadingCounts = {};
+        var SurveyData = {{ data|safe }};
+            // Iterate through survey data and count spreading occurrences
+            SurveyData.forEach(function (survey) {
+                var spreading = survey.spreading;
+                if (spreading in spreadingCounts) {
+                    spreadingCounts[spreading]++;
+                } else {
+                    spreadingCounts[spreading] = 1;
+                }
+            });
+            
+            // Convert spreading counts to an array of arrays
+            var spreadingData = [];
+            for (var key in spreadingCounts) {
+                if (spreadingCounts.hasOwnProperty(key)) {
+                    spreadingData.push([key, spreadingCounts[key]]);
+                }
+            }
+            
+            // Sort spreading data based on spreading name
+            spreadingData.sort();
+
+         var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Spreading');
+            data.addColumn('number', 'Count');
+            data.addRows(spreadingData);
+
+        var options = {
+          title: 'Spreading',
+          is3D: true,
+          backgroundColor:'#79ad3d'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+
+{% endblock %}
+</body>
+
+</html>
